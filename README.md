@@ -1,5 +1,5 @@
-# Docker Swarm Cluster (pre-docker 1.12)
+# Docker Swarm Setup
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A//raw.githubusercontent.com/josibb/swarmsetup/master/azuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjosibb%2Fswarmsetup%2Fmaster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
