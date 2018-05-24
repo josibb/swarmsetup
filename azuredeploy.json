@@ -1,0 +1,129 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sshPublicKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "SSH public key for the Virtual Machines."
+            }
+        },
+        "nodeCount": {
+            "type": "int",
+            "defaultValue": 3,
+            "metadata": {
+                "description": "Number of Swarm worker nodes in the cluster."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "virtualNetworkName": "swarm-vnet",
+        "subnetNameMasters": "subnet-masters",
+        "subnetNameNodes": "subnet-nodes",
+        "addressPrefixMasters": "10.0.0.0/16",
+        "addressPrefixNodes": "192.168.0.0/16",
+        "subnetPrefixMasters": "10.0.0.0/24",
+        "subnetPrefixNodes": "192.168.0.0/24",
+        "subnetRefMaster": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameMasters'))]",
+        "subnetRefNodes": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameNodes'))]",
+        "mastersNsgName": "swarm-masters-firewall",
+        "nodesNsgName": "swarm-nodes-firewall",
+        "mastersNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('mastersNsgName'))]",
+        "nodesNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nodesNsgName'))]",
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('mastersNsgID')]",
+                "[variables('nodesNsgID')]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefixMasters')]",
+                        "[variables('addressPrefixNodes')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetNameMasters')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefixMasters')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('mastersNsgID')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('subnetNameNodes')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefixNodes')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('nodesNsgID')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('mastersNsgName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "ssh",
+                        "properties": {
+                            "description": "",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('nodesNsgName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowAny",
+                        "properties": {
+                            "description": "Swarm node ports need to be configured on the load balancer to be reachable",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
