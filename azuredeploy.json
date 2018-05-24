@@ -31,12 +31,14 @@
         "addressPrefixNodes": "192.168.0.0/16",
         "subnetPrefixMasters": "10.0.0.0/24",
         "subnetPrefixNodes": "192.168.0.0/24",
-        "subnetRefMaster": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameMasters'))]",
-        "subnetRefNodes": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameNodes'))]",
         "mastersNsgName": "swarm-masters-firewall",
         "nodesNsgName": "swarm-nodes-firewall",
         "mastersNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('mastersNsgName'))]",
         "nodesNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nodesNsgName'))]",
+        "availabilitySetMasters": "swarm-masters-set",
+        "availabilitySetNodes": "swarm-nodes-set",
+        "managementPublicIPAddrName": "swarm-lb-masters-ip",
+        "nodesPublicIPAddrName": "swarm-lb-nodes-ip"
     },
     "resources": [
         {
@@ -123,6 +125,44 @@
                         }
                     }
                 ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('availabilitySetMasters')]",
+            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('availabilitySetNodes')]",
+            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('managementPublicIPAddrName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(variables('clusterFqdn'), '-manage')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('nodesPublicIPAddrName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('clusterFqdn')]"
+                }
             }
         }
     ]
